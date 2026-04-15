@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Kate & Jensen 가계부</title>
+  <link rel="manifest" href="manifest.json" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --bg2: #16162a;
+      --bg3: #1e1e35;
+      --card: #1e1e35;
+      --card2: #252540;
+      --border: rgba(255,255,255,0.07);
+      --accent: #7c6af7;
+      --accent2: #f7a06a;
+      --accent3: #6af7c8;
+      --text: #f0efff;
+      --text2: #9896b8;
+      --text3: #5f5e80;
+      --income: #6af7c8;
+      --expense: #f76a8a;
+      --fixed: #f7d06a;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #1a1a35 0%, #0f0f1a 100%);
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .app-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+    }
+    .app-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    .month-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .month-nav button {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .month-nav button:hover { background: var(--card2); color: var(--text); }
+    .month-label { font-size: 16px; font-weight: 700; min-width: 90px; text-align: center; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 16px 20px 0;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px 0;
+      border: none;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      background: var(--bg3);
+      color: var(--text3);
+    }
+    .tab.active {
+      background: var(--card);
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    /* ── Main content ── */
+    .content { padding: 20px; }
+
+    /* ── Summary cards ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .summary-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .summary-card.income::before { background: var(--income); }
+    .summary-card.expense::before { background: var(--expense); }
+    .summary-card.fixed::before { background: var(--fixed); }
+    .summary-card.balance::before { background: var(--accent); }
+
+    .summary-card.wide {
+      grid-column: 1 / -1;
+    }
+    .s-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase; }
+    .s-value { font-size: 22px; font-weight: 700; }
+    .s-value.income { color: var(--income); }
+    .s-value.expense { color: var(--expense); }
+    .s-value.fixed { color: var(--fixed); }
+    .s-value.balance-pos { color: var(--income); }
+    .s-value.balance-neg { color: var(--expense); }
+    .s-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+    /* ── Section ── */
+    .section { margin-bottom: 24px; }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text2);
+      letter-spacing: 0.5px;
+    }
+    .add-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .add-btn:hover { opacity: 0.85; }
+
+    /* ── List items ── */
+    .item-list { display: flex; flex-direction: column; gap: 8px; }
+    .item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      animation: fadeIn .3s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: none; } }
+
+    .item-left { display: flex; flex-direction: column; gap: 3px; }
+    .item-name { font-size: 14px; font-weight: 500; }
+    .item-meta { font-size: 11px; color: var(--text3); }
+    .item-right { display: flex; align-items: center; gap: 10px; }
+    .item-amount { font-size: 15px; font-weight: 700; }
+    .item-amount.income { color: var(--income); }
+    .item-amount.expense { color: var(--expense); }
+    .item-amount.fixed { color: var(--fixed); }
+    .del-btn {
+      background: none;
+      border: none;
+      color: var(--text3);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 2px 4px;
+      line-height: 1;
+      transition: color .2s;
+    }
+    .del-btn:hover { color: var(--expense); }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px;
+      color: var(--text3);
+      font-size: 13px;
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px dashed var(--border);
+    }
+
+    /* ── Progress bar ── */
+    .progress-wrap { margin-top: 8px; }
+    .progress-bar-bg {
+      background: var(--bg3);
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width .5s ease;
+    }
+    .progress-bar-fill.ok { background: var(--income); }
+    .progress-bar-fill.warn { background: var(--fixed); }
+    .progress-bar-fill.over { background: var(--expense); }
+    .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg2);
+      border-radius: 24px 24px 0 0;
+      padding: 24px 20px 40px;
+      width: 100%;
+      max-width: 480px;
+      border-top: 1px solid var(--border);
+      animation: slideUp .3s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+    .modal-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-close {
+      background: var(--bg3);
+      border: none;
+      color: var(--text2);
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 12px; color: var(--text3); margin-bottom: 6px; display: block; }
+    .form-input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 15px;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .form-input:focus { border-color: var(--accent); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .submit-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: opacity .2s;
+    }
+    .submit-btn:hover { opacity: 0.88; }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      display: flex;
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 12px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      color: var(--text3);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 10px;
+      transition: color .2s;
+    }
+    .nav-btn.active { color: var(--accent); }
+    .nav-icon { font-size: 22px; }
+
+    /* ── Loading ── */
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text3);
+      font-size: 14px;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Category chip ── */
+    .cat-chip {
+      display: inline-block;
+      background: var(--bg3);
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-size: 10px;
+      color: var(--text3);
+      margin-top: 2px;
+    }
+
+    select.form-input option { background: var(--bg2); }
+
+    .toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      z-index: 300;
+      opacity: 0;
+      transition: opacity .3s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="app-title">Kate & Jensen</div>
+      <div class="app-sub">가계부</div>
+    </div>
+    <div class="month-nav">
+      <button id="prevMonth">‹</button>
+      <div class="month-label" id="monthLabel"></div>
+      <button id="nextMonth">›</button>
+    </div>
+  </div>
+</div>
+
+<div class="tabs" id="tabBar">
+  <button class="tab active" data-tab="overview">📊 요약</button>
+  <button class="tab" data-tab="income">💰 수입</button>
+  <button class="tab" data-tab="fixed">📌 고정지출</button>
+  <button class="tab" data-tab="expense">💳 실제지출</button>
+</div>
+
+<div class="content" id="mainContent">
+  <div class="loading"><div class="spinner"></div>불러오는 중...</div>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modalTitle">항목 추가</span>
+      <button class="modal-close" id="modalClose">×</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <button class="nav-btn active" data-tab="overview"><span class="nav-icon">📊</span>요약</button>
+  <button class="nav-btn" data-tab="income"><span class="nav-icon">💰</span>수입</button>
+  <button class="nav-btn" data-tab="fixed"><span class="nav-icon">📌</span>고정지출</button>
+  <button class="nav-btn" data-tab="expense"><span class="nav-icon">💳</span>실제지출</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBx4i6rXiHX6rd0bH-pM8SK40hDOeFQVgo",
+  authDomain: "kate-and-jensen-finance.firebaseapp.com",
+  projectId: "kate-and-jensen-finance",
+  storageBucket: "kate-and-jensen-finance.firebasestorage.app",
+  messagingSenderId: "166215384595",
+  appId: "1:166215384595:web:95b620ef8fc5c04e5a09e6",
+  measurementId: "G-M9CFJ79RPK"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ── State ──
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth() + 1;
+let currentTab = 'overview';
+let data = { income: [], fixed: [], expense: [] };
+
+const EXPENSE_CATS = ['식비', '교통', '쇼핑', '의료', '문화/여가', '교육', '공과금', '기타'];
+const FIXED_CATS = ['주거', '보험', '통신', '구독', '대출', '기타'];
+
+// ── Helpers ──
+const fmt = n => n.toLocaleString('ko-KR') + '원';
+const monthKey = () => `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+const showToast = msg => {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+};
+
+// ── Firebase CRUD ──
+async function loadData() {
+  const mk = monthKey();
+  const snap = await getDocs(query(collection(db, 'entries'), where('month','==',mk)));
+  data = { income: [], fixed: [], expense: [] };
+  snap.forEach(d => {
+    const entry = { id: d.id, ...d.data() };
+    if (data[entry.type]) data[entry.type].push(entry);
+  });
+  // Sort by date desc
+  data.expense.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+}
+
+async function addEntry(entry) {
+  entry.month = monthKey();
+  await addDoc(collection(db, 'entries'), entry);
+  await loadData();
+  render();
+  showToast('✅ 저장되었습니다');
+}
+
+async function deleteEntry(id) {
+  await deleteDoc(doc(db, 'entries', id));
+  await loadData();
+  render();
+  showToast('🗑️ 삭제되었습니다');
+}
+
+// ── Render ──
+function render() {
+  updateMonthLabel();
+  const content = document.getElementById('mainContent');
+
+  const totalIncome = data.income.reduce((s,i) => s + Number(i.amount), 0);
+  const totalFixed = data.fixed.reduce((s,i) => s + Number(i.amount), 0);
+  const totalExpense = data.expense.reduce((s,i) => s + Number(i.amount), 0);
+  const totalOut = totalFixed + totalExpense;
+  const balance = totalIncome - totalOut;
+
+  if (currentTab === 'overview') {
+    const pct = totalIncome > 0 ? Math.min((totalOut / totalIncome) * 100, 100) : 0;
+    const fillClass = pct < 70 ? 'ok' : pct < 90 ? 'warn' : 'over';
+
+    content.innerHTML = `
+      <div class="summary-grid">
+        <div class="summary-card income">
+          <div class="s-label">💰 총 수입</div>
+          <div class="s-value income">${fmt(totalIncome)}</div>
+        </div>
+        <div class="summary-card expense">
+          <div class="s-label">💳 실제 지출</div>
+          <div class="s-value expense">${fmt(totalExpense)}</div>
+        </div>
+        <div class="summary-card fixed">
+          <div class="s-label">📌 고정 지출</div>
+          <div class="s-value fixed">${fmt(totalFixed)}</div>
+        </div>
+        <div class="summary-card balance">
+          <div class="s-label">📈 잔액</div>
+          <div class="s-value ${balance >= 0 ? 'balance-pos' : 'balance-neg'}">${fmt(balance)}</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">지출 현황</div>
+        </div>
+        <div class="summary-card wide">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:13px;color:var(--text2)">총 지출 / 수입</span>
+            <span style="font-size:13px;font-weight:700">${fmt(totalOut)} / ${fmt(totalIncome)}</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill ${fillClass}" style="width:${pct}%"></div>
+          </div>
+          <div class="progress-label">
+            <span>${pct.toFixed(0)}% 사용</span>
+            <span>잔여 ${fmt(Math.max(balance,0))}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">최근 지출</div>
+        </div>
+        ${data.expense.length === 0
+          ? `<div class="empty-state">이번 달 지출 내역이 없어요</div>`
+          : `<div class="item-list">${data.expense.slice(0,5).map(i => `
+            <div class="item">
+              <div class="item-left">
+                <div class="item-name">${i.name}</div>
+                <div class="item-meta">${i.date||''} ${i.category ? `<span class="cat-chip">${i.category}</span>` : ''}</div>
+              </div>
+              <div class="item-right">
+                <div class="item-amount expense">-${fmt(Number(i.amount))}</div>
+              </div>
+            </div>`).join('')}</div>`}
+      </div>
+    `;
+  }
+
+  else if (currentTab === 'income') {
+    content.innerHTML = `
+      <div class="summary-grid">
+        <div class="summary-card income wide">
+          <div class="s-label">이번 달 총 수입</div>
+          <div class="s-value income">${fmt(totalIncome)}</div>
+          <div class="s-sub">${data.income.length}건</div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">수입 내역</div>
+          <button class="add-btn" id="addIncomeBtn">+ 추가</button>
+        </div>
+        ${data.income.length === 0
+          ? `<div class="empty-state">수입 내역을 추가해보세요</div>`
+          : `<div class="item-list">${data.income.map(i => `
+            <div class="item">
+              <div class="item-left">
+                <div class="item-name">${i.name}</div>
+                <div class="item-meta">${i.date||''} ${i.note ? `· ${i.note}` : ''}</div>
+              </div>
+              <div class="item-right">
+                <div class="item-amount income">+${fmt(Number(i.amount))}</div>
+                <button class="del-btn" data-id="${i.id}" data-type="income">×</button>
+              </div>
+            </div>`).join('')}</div>`}
+      </div>
+    `;
+    document.getElementById('addIncomeBtn')?.addEventListener('click', () => openModal('income'));
+  }
+
+  else if (currentTab === 'fixed') {
+    content.innerHTML = `
+      <div class="summary-grid">
+        <div class="summary-card fixed wide">
+          <div class="s-label">이번 달 고정 지출</div>
+          <div class="s-value fixed">${fmt(totalFixed)}</div>
+          <div class="s-sub">${data.fixed.length}건</div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">고정 지출 내역</div>
+          <button class="add-btn" id="addFixedBtn">+ 추가</button>
+        </div>
+        ${data.fixed.length === 0
+          ? `<div class="empty-state">매월 고정으로 나가는 지출을 등록하세요</div>`
+          : `<div class="item-list">${data.fixed.map(i => `
+            <div class="item">
+              <div class="item-left">
+                <div class="item-name">${i.name}</div>
+                <div class="item-meta">${i.category ? `<span class="cat-chip">${i.category}</span>` : ''} ${i.note||''}</div>
+              </div>
+              <div class="item-right">
+                <div class="item-amount fixed">-${fmt(Number(i.amount))}</div>
+                <button class="del-btn" data-id="${i.id}" data-type="fixed">×</button>
+              </div>
+            </div>`).join('')}</div>`}
+      </div>
+    `;
+    document.getElementById('addFixedBtn')?.addEventListener('click', () => openModal('fixed'));
+  }
+
+  else if (currentTab === 'expense') {
+    // Group by category
+    const byCat = {};
+    data.expense.forEach(i => {
+      const c = i.category || '기타';
+      byCat[c] = (byCat[c]||0) + Number(i.amount);
+    });
+
+    content.innerHTML = `
+      <div class="summary-grid">
+        <div class="summary-card expense wide">
+          <div class="s-label">이번 달 실제 지출</div>
+          <div class="s-value expense">${fmt(totalExpense)}</div>
+          <div class="s-sub">${data.expense.length}건</div>
+        </div>
+      </div>
+      ${Object.keys(byCat).length > 0 ? `
+      <div class="section">
+        <div class="section-header"><div class="section-title">카테고리별</div></div>
+        <div class="item-list">
+          ${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,amt]) => `
+            <div class="item">
+              <div class="item-left"><div class="item-name">${cat}</div></div>
+              <div class="item-right"><div class="item-amount expense">-${fmt(amt)}</div></div>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">지출 내역</div>
+          <button class="add-btn" id="addExpenseBtn">+ 추가</button>
+        </div>
+        ${data.expense.length === 0
+          ? `<div class="empty-state">지출 내역을 추가해보세요</div>`
+          : `<div class="item-list">${data.expense.map(i => `
+            <div class="item">
+              <div class="item-left">
+                <div class="item-name">${i.name}</div>
+                <div class="item-meta">${i.date||''} ${i.category ? `<span class="cat-chip">${i.category}</span>` : ''}</div>
+              </div>
+              <div class="item-right">
+                <div class="item-amount expense">-${fmt(Number(i.amount))}</div>
+                <button class="del-btn" data-id="${i.id}" data-type="expense">×</button>
+              </div>
+            </div>`).join('')}</div>`}
+      </div>
+    `;
+    document.getElementById('addExpenseBtn')?.addEventListener('click', () => openModal('expense'));
+  }
+
+  // Delete buttons
+  document.querySelectorAll('.del-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (confirm('삭제할까요?')) await deleteEntry(btn.dataset.id);
+    });
+  });
+}
+
+// ── Modal ──
+function openModal(type) {
+  const overlay = document.getElementById('modalOverlay');
+  const title = document.getElementById('modalTitle');
+  const body = document.getElementById('modalBody');
+
+  overlay.classList.add('open');
+
+  if (type === 'income') {
+    title.textContent = '💰 수입 추가';
+    body.innerHTML = `
+      <div class="form-group">
+        <label class="form-label">항목명</label>
+        <input class="form-input" id="f_name" placeholder="예: 월급, 부수입" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">금액 (원)</label>
+          <input class="form-input" id="f_amount" type="number" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">날짜</label>
+          <input class="form-input" id="f_date" type="date" value="${todayStr()}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">메모 (선택)</label>
+        <input class="form-input" id="f_note" placeholder="메모" />
+      </div>
+      <button class="submit-btn" id="submitBtn">저장</button>
+    `;
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      const name = document.getElementById('f_name').value.trim();
+      const amount = document.getElementById('f_amount').value;
+      const date = document.getElementById('f_date').value;
+      const note = document.getElementById('f_note').value.trim();
+      if (!name || !amount) return alert('항목명과 금액을 입력해주세요');
+      closeModal();
+      await addEntry({ type: 'income', name, amount: Number(amount), date, note });
+    });
+  }
+
+  else if (type === 'fixed') {
+    title.textContent = '📌 고정 지출 추가';
+    body.innerHTML = `
+      <div class="form-group">
+        <label class="form-label">항목명</label>
+        <input class="form-input" id="f_name" placeholder="예: 월세, 보험료" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">금액 (원)</label>
+          <input class="form-input" id="f_amount" type="number" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">카테고리</label>
+          <select class="form-input" id="f_cat">
+            ${FIXED_CATS.map(c => `<option>${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">메모 (선택)</label>
+        <input class="form-input" id="f_note" placeholder="메모" />
+      </div>
+      <button class="submit-btn" id="submitBtn">저장</button>
+    `;
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      const name = document.getElementById('f_name').value.trim();
+      const amount = document.getElementById('f_amount').value;
+      const category = document.getElementById('f_cat').value;
+      const note = document.getElementById('f_note').value.trim();
+      if (!name || !amount) return alert('항목명과 금액을 입력해주세요');
+      closeModal();
+      await addEntry({ type: 'fixed', name, amount: Number(amount), category, note });
+    });
+  }
+
+  else if (type === 'expense') {
+    title.textContent = '💳 지출 추가';
+    body.innerHTML = `
+      <div class="form-group">
+        <label class="form-label">항목명</label>
+        <input class="form-input" id="f_name" placeholder="예: 점심식사, 마트" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">금액 (원)</label>
+          <input class="form-input" id="f_amount" type="number" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">날짜</label>
+          <input class="form-input" id="f_date" type="date" value="${todayStr()}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">카테고리</label>
+        <select class="form-input" id="f_cat">
+          ${EXPENSE_CATS.map(c => `<option>${c}</option>`).join('')}
+        </select>
+      </div>
+      <button class="submit-btn" id="submitBtn">저장</button>
+    `;
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      const name = document.getElementById('f_name').value.trim();
+      const amount = document.getElementById('f_amount').value;
+      const date = document.getElementById('f_date').value;
+      const category = document.getElementById('f_cat').value;
+      if (!name || !amount) return alert('항목명과 금액을 입력해주세요');
+      closeModal();
+      await addEntry({ type: 'expense', name, amount: Number(amount), date, category });
+    });
+  }
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+
+// ── Month nav ──
+function updateMonthLabel() {
+  document.getElementById('monthLabel').textContent = `${currentYear}.${String(currentMonth).padStart(2,'0')}`;
+}
+
+document.getElementById('prevMonth').addEventListener('click', async () => {
+  if (currentMonth === 1) { currentMonth = 12; currentYear--; }
+  else currentMonth--;
+  await reload();
+});
+document.getElementById('nextMonth').addEventListener('click', async () => {
+  if (currentMonth === 12) { currentMonth = 1; currentYear++; }
+  else currentMonth++;
+  await reload();
+});
+
+// ── Tabs ──
+document.querySelectorAll('[data-tab]').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    currentTab = btn.dataset.tab;
+    document.querySelectorAll('.tab, .nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll(`[data-tab="${currentTab}"]`).forEach(b => b.classList.add('active'));
+    render();
+  });
+});
+
+// ── Utils ──
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+async function reload() {
+  document.getElementById('mainContent').innerHTML = '<div class="loading"><div class="spinner"></div>불러오는 중...</div>';
+  await loadData();
+  render();
+}
+
+// ── Init ──
+reload();
+</script>
+</body>
+</html>
