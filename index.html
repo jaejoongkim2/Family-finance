@@ -131,7 +131,7 @@
 <div class="tabs">
   <button class="tab active" data-tab="overview">📊 요약</button>
   <button class="tab" data-tab="income">💰 수입</button>
-  <button class="tab" data-tab="fixed">📌 고정지출</button>
+  <button class="tab" data-tab="fixed">📌 예상지출</button>
   <button class="tab" data-tab="expense">💳 실제지출</button>
 </div>
 
@@ -152,7 +152,7 @@
 <div class="bottom-nav">
   <button class="nav-btn active" data-tab="overview"><span class="nav-icon">📊</span>요약</button>
   <button class="nav-btn" data-tab="income"><span class="nav-icon">💰</span>수입</button>
-  <button class="nav-btn" data-tab="fixed"><span class="nav-icon">📌</span>고정지출</button>
+  <button class="nav-btn" data-tab="fixed"><span class="nav-icon">📌</span>예상지출</button>
   <button class="nav-btn" data-tab="expense"><span class="nav-icon">💳</span>실제지출</button>
 </div>
 
@@ -179,8 +179,26 @@ let currentMonth = new Date().getMonth() + 1;
 let currentTab = 'overview';
 let data = { income: [], fixed: [], expense: [] };
 
-const EXPENSE_CATS = ['식비', '교통', '쇼핑', '의료', '문화/여가', '교육', '공과금', '기타'];
-const FIXED_CATS = ['주거', '보험', '통신', '구독', '대출', '기타'];
+const DEFAULT_EXPENSE_CATS = ['식비', '교통', '쇼핑', '의료', '문화/여가', '교육', '공과금', '기타'];
+const DEFAULT_FIXED_CATS = ['주거', '보험', '통신', '구독', '대출', '기타'];
+let EXPENSE_CATS = JSON.parse(localStorage.getItem('expense_cats') || JSON.stringify(DEFAULT_EXPENSE_CATS));
+let FIXED_CATS = JSON.parse(localStorage.getItem('fixed_cats') || JSON.stringify(DEFAULT_FIXED_CATS));
+function saveExpenseCats() { localStorage.setItem('expense_cats', JSON.stringify(EXPENSE_CATS)); }
+function saveFixedCats() { localStorage.setItem('fixed_cats', JSON.stringify(FIXED_CATS)); }
+function addCategoryUI(type) {
+  const name = prompt(`추가할 카테고리 이름을 입력하세요:`);
+  if (!name || !name.trim()) return;
+  const trimmed = name.trim();
+  if (type === 'expense') {
+    if (EXPENSE_CATS.includes(trimmed)) return alert('이미 있는 카테고리예요');
+    EXPENSE_CATS.push(trimmed); saveExpenseCats();
+  } else {
+    if (FIXED_CATS.includes(trimmed)) return alert('이미 있는 카테고리예요');
+    FIXED_CATS.push(trimmed); saveFixedCats();
+  }
+  showToast('✅ 카테고리가 추가되었습니다');
+  render();
+}
 
 const fmt = n => Number(n).toLocaleString('ko-KR') + '원';
 const monthKey = () => `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
@@ -208,7 +226,7 @@ async function loadData() {
   data.income.sort((a,b) => (b.date||'').localeCompare(a.date||''));
   data.expense.sort((a,b) => (b.date||'').localeCompare(a.date||''));
 
-  // 고정지출: 월 구분 없이 전체 로드
+  // 예상지출: 월 구분 없이 전체 로드
   const fixedSnap = await getDocs(query(collection(db,'entries'), where('type','==','fixed')));
   data.fixed = [];
   fixedSnap.forEach(d => data.fixed.push({ id: d.id, ...d.data() }));
@@ -237,13 +255,13 @@ async function deleteEntry(id) {
 // ── Render ──
 function render() {
   updateMonthLabel();
-  // 고정지출 탭이면 월 네비 숨기기
+  // 예상지출 탭이면 월 네비 숨기기
   document.getElementById('monthNav').classList.toggle('hidden', currentTab === 'fixed');
 
   const totalIncome = data.income.reduce((s,i) => s + Number(i.amount), 0);
   const totalFixed  = data.fixed.reduce((s,i) => s + Number(i.amount), 0);
   const totalExpense= data.expense.reduce((s,i) => s + Number(i.amount), 0);
-  const balance = totalIncome - totalExpense; // 고정지출 제외
+  const balance = totalIncome - totalExpense; // 예상지출 제외
 
   const content = document.getElementById('mainContent');
 
@@ -263,7 +281,7 @@ function render() {
         <div class="summary-card balance wide">
           <div class="s-label">📈 잔액 (수입 − 실제지출)</div>
           <div class="s-value ${balance>=0?'balance-pos':'balance-neg'}">${fmt(balance)}</div>
-          <div class="s-sub">고정지출 ${fmt(totalFixed)}은 별도 관리</div>
+          <div class="s-sub">예상지출 ${fmt(totalFixed)}은 별도 관리</div>
         </div>
       </div>
       <div class="section">
@@ -303,23 +321,40 @@ function render() {
   }
 
   else if (currentTab === 'fixed') {
+    const byCatFixed = {};
+    data.fixed.forEach(i => { const c = i.category||'기타'; byCatFixed[c]=(byCatFixed[c]||0)+Number(i.amount); });
     content.innerHTML = `
-      <div class="notice">📌 고정지출은 월 구분 없이 관리되며, 잔액 계산에 포함되지 않습니다.</div>
+      <div class="notice">📌 예상지출은 월 구분 없이 관리되며, 잔액 계산에 포함되지 않습니다.</div>
       <div class="summary-grid">
         <div class="summary-card fixed wide">
-          <div class="s-label">월 고정 지출 합계</div>
+          <div class="s-label">월 예상 지출 합계</div>
           <div class="s-value fixed">${fmt(totalFixed)}</div>
           <div class="s-sub">${data.fixed.length}건 등록됨</div>
         </div>
       </div>
+      ${Object.keys(byCatFixed).length ? `
+        <div class="section">
+          <div class="section-header"><div class="section-title">카테고리별</div></div>
+          <div class="item-list">
+            ${Object.entries(byCatFixed).sort((a,b)=>b[1]-a[1]).map(([c,a])=>`
+              <div class="item">
+                <div class="item-left"><div class="item-name">${c}</div></div>
+                <div class="item-right"><div class="item-amount fixed">-${fmt(a)}</div></div>
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
       <div class="section">
         <div class="section-header">
-          <div class="section-title">고정 지출 목록</div>
-          <button class="add-btn" id="addBtn">+ 추가</button>
+          <div class="section-title">예상 지출 목록</div>
+          <div style="display:flex;gap:8px">
+            <button class="add-btn" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border)" id="addCatBtn">+ 카테고리</button>
+            <button class="add-btn" id="addBtn">+ 추가</button>
+          </div>
         </div>
         ${itemListHtml(data.fixed, 'fixed', true)}
       </div>`;
     document.getElementById('addBtn').addEventListener('click', () => openModal('fixed', null));
+    document.getElementById('addCatBtn').addEventListener('click', () => addCategoryUI('fixed'));
   }
 
   else if (currentTab === 'expense') {
@@ -347,11 +382,15 @@ function render() {
       <div class="section">
         <div class="section-header">
           <div class="section-title">지출 내역</div>
-          <button class="add-btn" id="addBtn">+ 추가</button>
+          <div style="display:flex;gap:8px">
+            <button class="add-btn" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border)" id="addCatBtn">+ 카테고리</button>
+            <button class="add-btn" id="addBtn">+ 추가</button>
+          </div>
         </div>
         ${itemListHtml(data.expense, 'expense', true)}
       </div>`;
     document.getElementById('addBtn').addEventListener('click', () => openModal('expense', null));
+    document.getElementById('addCatBtn').addEventListener('click', () => addCategoryUI('expense'));
   }
 
   // 버튼 이벤트
@@ -393,7 +432,7 @@ function openModal(type, item) {
   const isEdit = !!item;
   document.getElementById('modalOverlay').classList.add('open');
   document.getElementById('modalTitle').textContent =
-    `${{income:'💰 수입', fixed:'📌 고정지출', expense:'💳 지출'}[type]} ${isEdit?'수정':'추가'}`;
+    `${{income:'💰 수입', fixed:'📌 예상지출', expense:'💳 지출'}[type]} ${isEdit?'수정':'추가'}`;
 
   const body = document.getElementById('modalBody');
 
