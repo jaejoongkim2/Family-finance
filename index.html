@@ -179,24 +179,23 @@ let currentMonth = new Date().getMonth() + 1;
 let currentTab = 'overview';
 let data = { income: [], fixed: [], expense: [] };
 
-const DEFAULT_EXPENSE_CATS = ['식비', '교통', '쇼핑', '의료', '문화/여가', '교육', '공과금', '기타'];
-const DEFAULT_FIXED_CATS = ['주거', '보험', '통신', '구독', '대출', '기타'];
-let EXPENSE_CATS = JSON.parse(localStorage.getItem('expense_cats') || JSON.stringify(DEFAULT_EXPENSE_CATS));
-let FIXED_CATS = JSON.parse(localStorage.getItem('fixed_cats') || JSON.stringify(DEFAULT_FIXED_CATS));
-function saveExpenseCats() { localStorage.setItem('expense_cats', JSON.stringify(EXPENSE_CATS)); }
-function saveFixedCats() { localStorage.setItem('fixed_cats', JSON.stringify(FIXED_CATS)); }
+const DEFAULT_CATS = ['식비', '교통', '쇼핑', '의료', '문화/여가', '교육', '공과금', '주거', '보험', '통신', '구독', '대출', '기타'];
+let SHARED_CATS = JSON.parse(localStorage.getItem('shared_cats') || JSON.stringify(DEFAULT_CATS));
+let EXPENSE_CATS = SHARED_CATS;
+let FIXED_CATS = SHARED_CATS;
+function saveCats() {
+  localStorage.setItem('shared_cats', JSON.stringify(SHARED_CATS));
+  EXPENSE_CATS = SHARED_CATS;
+  FIXED_CATS = SHARED_CATS;
+}
 function addCategoryUI(type) {
-  const name = prompt(`추가할 카테고리 이름을 입력하세요:`);
+  const name = prompt('추가할 카테고리 이름을 입력하세요:');
   if (!name || !name.trim()) return;
   const trimmed = name.trim();
-  if (type === 'expense') {
-    if (EXPENSE_CATS.includes(trimmed)) return alert('이미 있는 카테고리예요');
-    EXPENSE_CATS.push(trimmed); saveExpenseCats();
-  } else {
-    if (FIXED_CATS.includes(trimmed)) return alert('이미 있는 카테고리예요');
-    FIXED_CATS.push(trimmed); saveFixedCats();
-  }
-  showToast('✅ 카테고리가 추가되었습니다');
+  if (SHARED_CATS.includes(trimmed)) return alert('이미 있는 카테고리예요');
+  SHARED_CATS.push(trimmed);
+  saveCats();
+  showToast('✅ 카테고리가 추가되었습니다 (예상·실제지출 공통 적용)');
   render();
 }
 
@@ -252,6 +251,74 @@ async function deleteEntry(id) {
   showToast('🗑️ 삭제되었습니다');
 }
 
+// ── Category Comparison ──
+function renderCategoryComparison(fixedItems, expenseItems) {
+  const allCats = [...new Set([
+    ...fixedItems.map(i => i.category || '기타'),
+    ...expenseItems.map(i => i.category || '기타')
+  ])];
+  if (!allCats.length) return `<div class="empty-state">데이터가 없어요</div>`;
+
+  const fixedByCat = {};
+  const expenseByCat = {};
+  fixedItems.forEach(i => { const c = i.category||'기타'; fixedByCat[c]=(fixedByCat[c]||0)+Number(i.amount); });
+  expenseItems.forEach(i => { const c = i.category||'기타'; expenseByCat[c]=(expenseByCat[c]||0)+Number(i.amount); });
+
+  const totalFixed = Object.values(fixedByCat).reduce((s,v)=>s+v,0);
+  const totalExpense = Object.values(expenseByCat).reduce((s,v)=>s+v,0);
+
+  // 예상지출 기준으로 정렬, 실제지출만 있는 카테고리도 포함
+  const sorted = allCats.sort((a,b)=>(fixedByCat[b]||0)-(fixedByCat[a]||0));
+
+  return `
+    <div style="display:flex;justify-content:flex-end;gap:16px;margin-bottom:12px;font-size:11px;color:var(--text3)">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--fixed);display:inline-block"></span>예상</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--expense);display:inline-block"></span>실제</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      ${sorted.map(cat => {
+        const planned = fixedByCat[cat] || 0;
+        const actual  = expenseByCat[cat] || 0;
+        const max = Math.max(planned, actual, 1);
+        const plannedPct = (planned / max * 100).toFixed(1);
+        const actualPct  = (actual  / max * 100).toFixed(1);
+        const over = actual > planned && planned > 0;
+        const statusColor = over ? 'var(--expense)' : actual > 0 ? 'var(--income)' : 'var(--text3)';
+        const statusText  = over ? `+${fmt(actual-planned)} 초과` : actual > 0 && planned > 0 ? `${fmt(planned-actual)} 절약` : '';
+        return `
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:13px;font-weight:500">${cat}</span>
+              <span style="font-size:11px;color:${statusColor};font-weight:600">${statusText}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:10px;color:var(--text3);width:24px;text-align:right;flex-shrink:0">예상</span>
+                <div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
+                  <div style="width:${plannedPct}%;height:100%;background:var(--fixed);border-radius:4px;transition:width .5s"></div>
+                </div>
+                <span style="font-size:11px;color:var(--fixed);width:80px;text-align:right;flex-shrink:0">${planned ? fmt(planned) : '-'}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:10px;color:var(--text3);width:24px;text-align:right;flex-shrink:0">실제</span>
+                <div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
+                  <div style="width:${actualPct}%;height:100%;background:${over?'var(--expense)':'var(--income)'};border-radius:4px;transition:width .5s"></div>
+                </div>
+                <span style="font-size:11px;color:${over?'var(--expense)':'var(--income)'};width:80px;text-align:right;flex-shrink:0">${actual ? fmt(actual) : '-'}</span>
+              </div>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:13px">
+      <span style="color:var(--text3)">전체 합계</span>
+      <div style="display:flex;gap:16px">
+        <span style="color:var(--fixed)">예상 ${fmt(totalFixed)}</span>
+        <span style="color:${totalExpense>totalFixed&&totalFixed>0?'var(--expense)':'var(--income)'}">실제 ${fmt(totalExpense)}</span>
+      </div>
+    </div>`;
+}
+
 // ── Render ──
 function render() {
   updateMonthLabel();
@@ -298,7 +365,12 @@ function render() {
       <div class="section">
         <div class="section-header"><div class="section-title">최근 지출</div></div>
         ${itemListHtml(data.expense.slice(0,5), 'expense', false)}
+      </div>
+      <div class="section">
+        <div class="section-header"><div class="section-title">카테고리별 예상 vs 실제</div></div>
+        ${renderCategoryComparison(data.fixed, data.expense)}
       </div>`;
+  }
   }
 
   else if (currentTab === 'income') {
