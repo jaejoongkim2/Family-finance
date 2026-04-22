@@ -257,9 +257,17 @@ function toggleDetail(uid) {
   const el = document.getElementById('detail_' + uid);
   const arrow = document.getElementById('arrow_' + uid);
   if (!el) return;
-  const isOpen = el.style.display === 'block';
-  el.style.display = isOpen ? 'none' : 'block';
-  arrow.textContent = isOpen ? '▼' : '▲';
+  if (el.classList.contains('open')) {
+    el.classList.remove('open');
+    el.style.removeProperty('display');
+    el.style.display = 'none';
+    if (arrow) arrow.textContent = '▼';
+  } else {
+    el.classList.add('open');
+    el.style.removeProperty('display');
+    el.style.display = 'block';
+    if (arrow) arrow.textContent = '▲';
+  }
 }
 // ── 카테고리별 비교 렌더링 ──
 function renderCategoryComparison(fixedItems, expenseItems) {
@@ -375,7 +383,7 @@ function renderCategoryComparison(fixedItems, expenseItems) {
         </div>
       </div>
       ${rows}
-      <hr class="compare-divider">
+      <hr class="">
       <div class="compare-total">
         <span style="color:var(--text3)">전체 합계</span>
         <div style="display:flex;gap:16px">
