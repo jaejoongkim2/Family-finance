@@ -56,7 +56,8 @@
     .section { margin-bottom: 24px; }
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .section-title { font-size: 14px; font-weight: 700; color: var(--text2); }
-    .add-btn { background: var(--accent); color: #fff; border: none; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; cursor: pointer; }
+    .add-btn { background: var(--accent); color: #fff; border: none; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; cursor: pointer; white-space: nowrap; }
+    .ghost-btn { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; cursor: pointer; white-space: nowrap; }
 
     .item-list { display: flex; flex-direction: column; gap: 8px; }
     .item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; animation: fadeIn .3s ease; }
@@ -73,6 +74,12 @@
     .icon-btn { background: none; border: none; font-size: 15px; cursor: pointer; padding: 4px; opacity: 0.55; transition: opacity .2s; }
     .icon-btn:hover { opacity: 1; }
 
+    /* 카테고리 그룹 */
+    .cat-group { margin-bottom: 16px; }
+    .cat-group-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px; margin-bottom: 6px; border-bottom: 1px solid var(--border); }
+    .cat-group-name { font-size: 12px; font-weight: 700; color: var(--fixed); }
+    .cat-group-total { font-size: 12px; color: var(--fixed); }
+
     .empty-state { text-align: center; padding: 30px; color: var(--text3); font-size: 13px; background: var(--card); border-radius: var(--radius); border: 1px dashed var(--border); }
 
     .progress-bar-bg { background: var(--bg3); border-radius: 4px; height: 6px; overflow: hidden; margin-top: 6px; }
@@ -83,6 +90,40 @@
     .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-top: 4px; }
 
     .notice { background: rgba(247,208,106,0.08); border: 1px solid rgba(247,208,106,0.2); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 12px; color: var(--fixed); margin-bottom: 20px; line-height: 1.7; }
+
+    /* 카테고리 비교 카드 */
+    .compare-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; }
+    .compare-row { margin-bottom: 16px; }
+    .compare-row:last-of-type { margin-bottom: 0; }
+    .compare-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; cursor: pointer; user-select: none; padding: 2px 0; }
+    .compare-header:hover .compare-cat { color: var(--text); }
+    .compare-cat { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .compare-arrow { font-size: 10px; color: var(--text3); transition: transform .2s; }
+    .compare-arrow.open { transform: rotate(180deg); }
+    .compare-status { font-size: 11px; font-weight: 600; }
+    .compare-bar-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+    .compare-bar-label { font-size: 10px; color: var(--text3); width: 24px; text-align: right; flex-shrink: 0; }
+    .compare-bar-bg { flex: 1; background: var(--bg3); border-radius: 4px; height: 8px; overflow: hidden; }
+    .compare-bar-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+    .compare-bar-amount { font-size: 11px; width: 80px; text-align: right; flex-shrink: 0; }
+
+    /* 펼치기 패널 */
+    .detail-panel { overflow: hidden; max-height: 0; transition: max-height .3s ease; }
+    .detail-panel.open { max-height: 1000px; }
+    .detail-inner { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .detail-col-title { font-size: 11px; font-weight: 700; margin-bottom: 6px; padding-left: 2px; }
+    .detail-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; background: var(--bg3); border-radius: 8px; margin-bottom: 4px; }
+    .detail-item-left { display: flex; flex-direction: column; gap: 2px; }
+    .detail-item-name { font-size: 12px; }
+    .detail-item-date { font-size: 10px; color: var(--text3); }
+    .detail-item-amount { font-size: 12px; font-weight: 600; flex-shrink: 0; }
+    .detail-empty { font-size: 12px; color: var(--text3); padding: 6px 10px; }
+
+    .compare-total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; margin-top: 14px; border-top: 1px solid var(--border); font-size: 13px; }
+
+    /* 범례 */
+    .legend { display: flex; justify-content: flex-end; gap: 16px; margin-bottom: 14px; font-size: 11px; color: var(--text3); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
 
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
     .modal-overlay.open { display: flex; }
@@ -181,21 +222,17 @@ let data = { income: [], fixed: [], expense: [] };
 
 const DEFAULT_CATS = ['식비', '교통', '쇼핑', '의료', '문화/여가', '교육', '공과금', '주거', '보험', '통신', '구독', '대출', '기타'];
 let SHARED_CATS = JSON.parse(localStorage.getItem('shared_cats') || JSON.stringify(DEFAULT_CATS));
-let EXPENSE_CATS = SHARED_CATS;
-let FIXED_CATS = SHARED_CATS;
-function saveCats() {
-  localStorage.setItem('shared_cats', JSON.stringify(SHARED_CATS));
-  EXPENSE_CATS = SHARED_CATS;
-  FIXED_CATS = SHARED_CATS;
-}
-function addCategoryUI(type) {
+
+function saveCats() { localStorage.setItem('shared_cats', JSON.stringify(SHARED_CATS)); }
+
+function addCategoryUI() {
   const name = prompt('추가할 카테고리 이름을 입력하세요:');
   if (!name || !name.trim()) return;
   const trimmed = name.trim();
-  if (SHARED_CATS.includes(trimmed)) return alert('이미 있는 카테고리예요');
+  if (SHARED_CATS.includes(trimmed)) { alert('이미 있는 카테고리예요'); return; }
   SHARED_CATS.push(trimmed);
   saveCats();
-  showToast('✅ 카테고리가 추가되었습니다 (예상·실제지출 공통 적용)');
+  showToast('✅ 카테고리 추가됨 (예상·실제지출 공통 적용)');
   render();
 }
 
@@ -212,8 +249,6 @@ const showToast = msg => {
 // ── Firebase ──
 async function loadData() {
   const mk = monthKey();
-
-  // 수입/지출: 월별 필터
   const snap = await getDocs(query(collection(db, 'entries'), where('month','==', mk)));
   data.income = [];
   data.expense = [];
@@ -225,7 +260,6 @@ async function loadData() {
   data.income.sort((a,b) => (b.date||'').localeCompare(a.date||''));
   data.expense.sort((a,b) => (b.date||'').localeCompare(a.date||''));
 
-  // 예상지출: 월 구분 없이 전체 로드
   const fixedSnap = await getDocs(query(collection(db,'entries'), where('type','==','fixed')));
   data.fixed = [];
   fixedSnap.forEach(d => data.fixed.push({ id: d.id, ...d.data() }));
@@ -238,116 +272,211 @@ async function addEntry(entry) {
   await loadData(); render();
   showToast('✅ 저장되었습니다');
 }
-
 async function updateEntry(id, fields) {
   await updateDoc(doc(db, 'entries', id), fields);
   await loadData(); render();
   showToast('✏️ 수정되었습니다');
 }
-
 async function deleteEntry(id) {
   await deleteDoc(doc(db, 'entries', id));
   await loadData(); render();
   showToast('🗑️ 삭제되었습니다');
 }
 
-// ── Category Comparison ──
-  // ── 카테고리 상세 토글 ──
-function toggleDetail(uid) {
-  const el = document.getElementById('detail_' + uid);
-  const arrow = document.getElementById('arrow_' + uid);
-  if (!el) return;
-  if (el.classList.contains('open')) {
-    el.classList.remove('open');
-    el.style.removeProperty('display');
-    el.style.display = 'none';
-    if (arrow) arrow.textContent = '▼';
-  } else {
-    el.classList.add('open');
-    el.style.removeProperty('display');
-    el.style.display = 'block';
-    if (arrow) arrow.textContent = '▲';
-  }
+// ── 카테고리별 그룹 목록 ──
+function itemListByCategory(items, type) {
+  if (!items.length) return `<div class="empty-state">내역이 없어요</div>`;
+  const groups = {};
+  items.forEach(i => {
+    const c = i.category || '기타';
+    if (!groups[c]) groups[c] = [];
+    groups[c].push(i);
+  });
+  const sign = type === 'income' ? '+' : '-';
+  return Object.entries(groups).map(([cat, catItems]) => {
+    const catTotal = catItems.reduce((s,i) => s + Number(i.amount), 0);
+    return `
+      <div class="cat-group">
+        <div class="cat-group-header">
+          <span class="cat-group-name">${cat}</span>
+          <span class="cat-group-total">${sign}${fmt(catTotal)}</span>
+        </div>
+        <div class="item-list">
+          ${catItems.map(i => `
+            <div class="item">
+              <div class="item-left">
+                <div class="item-name">${i.name}</div>
+                <div class="item-meta">${i.date||''} ${i.note ? `· ${i.note}` : ''}</div>
+              </div>
+              <div class="item-right">
+                <div class="item-amount ${type}">${sign}${fmt(i.amount)}</div>
+                <div class="action-btns">
+                  <button class="icon-btn edit-btn" data-id="${i.id}" data-type="${type}">✏️</button>
+                  <button class="icon-btn del-btn" data-id="${i.id}">🗑️</button>
+                </div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
 }
-// ── 카테고리별 비교 렌더링 ──
-function renderCategoryComparison(fixedItems, expenseItems) {
-  const allCats = [...new Set([
-    ...fixedItems.map(i => i.category || '기타'),
-    ...expenseItems.map(i => i.category || '기타')
-  ])];
-  if (!allCats.length) return `<div class="empty-state">데이터가 없어요</div>`;
 
+// ── 일반 목록 ──
+function itemListHtml(items, type, showActions) {
+  if (!items.length) return `<div class="empty-state">내역이 없어요</div>`;
+  const sign = type === 'income' ? '+' : '-';
+  return `<div class="item-list">${items.map(i => `
+    <div class="item">
+      <div class="item-left">
+        <div class="item-name">${i.name}</div>
+        <div class="item-meta">${i.date||''} ${i.category ? `<span class="cat-chip">${i.category}</span>` : ''} ${i.note ? `· ${i.note}` : ''}</div>
+      </div>
+      <div class="item-right">
+        <div class="item-amount ${type}">${sign}${fmt(i.amount)}</div>
+        ${showActions ? `
+          <div class="action-btns">
+            <button class="icon-btn edit-btn" data-id="${i.id}" data-type="${type}">✏️</button>
+            <button class="icon-btn del-btn" data-id="${i.id}">🗑️</button>
+          </div>` : ''}
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+// ── 카테고리 비교 ──
+function renderCategoryComparison(fixedItems, expenseItems) {
   const fixedByCat = {};
   const expenseByCat = {};
-  fixedItems.forEach(i => { const c = i.category||'기타'; fixedByCat[c]=(fixedByCat[c]||0)+Number(i.amount); });
-  expenseItems.forEach(i => { const c = i.category||'기타'; expenseByCat[c]=(expenseByCat[c]||0)+Number(i.amount); });
+  const fixedItemsByCat = {};
+  const expenseItemsByCat = {};
 
-  const totalFixed = Object.values(fixedByCat).reduce((s,v)=>s+v,0);
-  const totalExpense = Object.values(expenseByCat).reduce((s,v)=>s+v,0);
+  fixedItems.forEach(i => {
+    const c = i.category || '기타';
+    fixedByCat[c] = (fixedByCat[c] || 0) + Number(i.amount);
+    if (!fixedItemsByCat[c]) fixedItemsByCat[c] = [];
+    fixedItemsByCat[c].push(i);
+  });
+  expenseItems.forEach(i => {
+    const c = i.category || '기타';
+    expenseByCat[c] = (expenseByCat[c] || 0) + Number(i.amount);
+    if (!expenseItemsByCat[c]) expenseItemsByCat[c] = [];
+    expenseItemsByCat[c].push(i);
+  });
 
-  // 예상지출 기준으로 정렬, 실제지출만 있는 카테고리도 포함
-  const sorted = allCats.sort((a,b)=>(fixedByCat[b]||0)-(fixedByCat[a]||0));
+  const allCats = [...new Set([...Object.keys(fixedByCat), ...Object.keys(expenseByCat)])];
+  if (!allCats.length) return `<div class="empty-state">예상지출 또는 실제지출을 입력하면 비교가 나타나요</div>`;
+
+  const sorted = allCats.sort((a,b) => (fixedByCat[b]||0) - (fixedByCat[a]||0));
+  const totalFixed   = Object.values(fixedByCat).reduce((s,v) => s+v, 0);
+  const totalExpense = Object.values(expenseByCat).reduce((s,v) => s+v, 0);
+  const totalOver = totalExpense > totalFixed && totalFixed > 0;
+
+  const rows = sorted.map(cat => {
+    const planned = fixedByCat[cat] || 0;
+    const actual  = expenseByCat[cat] || 0;
+    const maxVal  = Math.max(planned, actual, 1);
+    const plannedPct = (planned / maxVal * 100).toFixed(1);
+    const actualPct  = (actual  / maxVal * 100).toFixed(1);
+    const over = actual > planned && planned > 0;
+    const statusColor = over ? 'var(--expense)' : (actual > 0 && planned > 0) ? 'var(--income)' : 'var(--text3)';
+    const statusText  = over ? `+${fmt(actual - planned)} 초과` : (actual > 0 && planned > 0) ? `${fmt(planned - actual)} 절약` : '';
+    const actualBarColor = over ? 'var(--expense)' : 'var(--income)';
+    const uid = 'cat_' + cat.replace(/[^a-zA-Z0-9가-힣]/g, '_') + '_' + Math.random().toString(36).slice(2,6);
+
+    const fixedListHtml = (fixedItemsByCat[cat] || []).length
+      ? (fixedItemsByCat[cat] || []).map(i => `
+          <div class="detail-item">
+            <span class="detail-item-name">${i.name}</span>
+            <span class="detail-item-amount" style="color:var(--fixed)">-${fmt(i.amount)}</span>
+          </div>`).join('')
+      : `<div class="detail-empty">항목 없음</div>`;
+
+    const expenseListHtml = (expenseItemsByCat[cat] || []).length
+      ? (expenseItemsByCat[cat] || []).map(i => `
+          <div class="detail-item">
+            <div class="detail-item-left">
+              <span class="detail-item-name">${i.name}</span>
+              ${i.date ? `<span class="detail-item-date">${i.date}</span>` : ''}
+            </div>
+            <span class="detail-item-amount" style="color:${actualBarColor}">-${fmt(i.amount)}</span>
+          </div>`).join('')
+      : `<div class="detail-empty">항목 없음</div>`;
+
+    return `
+      <div class="compare-row">
+        <div class="compare-header" data-uid="${uid}">
+          <span class="compare-cat">
+            ${cat}
+            <span class="compare-arrow" id="arrow_${uid}">▼</span>
+          </span>
+          <span class="compare-status" style="color:${statusColor}">${statusText}</span>
+        </div>
+        <div class="compare-bar-wrap">
+          <span class="compare-bar-label">예상</span>
+          <div class="compare-bar-bg"><div class="compare-bar-fill" style="width:${plannedPct}%;background:var(--fixed)"></div></div>
+          <span class="compare-bar-amount" style="color:var(--fixed)">${planned ? fmt(planned) : '-'}</span>
+        </div>
+        <div class="compare-bar-wrap">
+          <span class="compare-bar-label">실제</span>
+          <div class="compare-bar-bg"><div class="compare-bar-fill" style="width:${actualPct}%;background:${actualBarColor}"></div></div>
+          <span class="compare-bar-amount" style="color:${actualBarColor}">${actual ? fmt(actual) : '-'}</span>
+        </div>
+        <div class="detail-panel" id="detail_${uid}">
+          <div class="detail-inner">
+            <div>
+              <div class="detail-col-title" style="color:var(--fixed)">📌 예상 목록</div>
+              ${fixedListHtml}
+            </div>
+            <div>
+              <div class="detail-col-title" style="color:${actualBarColor}">💳 실제 목록</div>
+              ${expenseListHtml}
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
 
   return `
-    <div style="display:flex;justify-content:flex-end;gap:16px;margin-bottom:12px;font-size:11px;color:var(--text3)">
-      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--fixed);display:inline-block"></span>예상</span>
-      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--expense);display:inline-block"></span>실제</span>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:14px">
-      ${sorted.map(cat => {
-        const planned = fixedByCat[cat] || 0;
-        const actual  = expenseByCat[cat] || 0;
-        const max = Math.max(planned, actual, 1);
-        const plannedPct = (planned / max * 100).toFixed(1);
-        const actualPct  = (actual  / max * 100).toFixed(1);
-        const over = actual > planned && planned > 0;
-        const statusColor = over ? 'var(--expense)' : actual > 0 ? 'var(--income)' : 'var(--text3)';
-        const statusText  = over ? `+${fmt(actual-planned)} 초과` : actual > 0 && planned > 0 ? `${fmt(planned-actual)} 절약` : '';
-        return `
-          <div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <span style="font-size:13px;font-weight:500">${cat}</span>
-              <span style="font-size:11px;color:${statusColor};font-weight:600">${statusText}</span>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <div style="display:flex;align-items:center;gap:8px">
-                <span style="font-size:10px;color:var(--text3);width:24px;text-align:right;flex-shrink:0">예상</span>
-                <div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
-                  <div style="width:${plannedPct}%;height:100%;background:var(--fixed);border-radius:4px;transition:width .5s"></div>
-                </div>
-                <span style="font-size:11px;color:var(--fixed);width:80px;text-align:right;flex-shrink:0">${planned ? fmt(planned) : '-'}</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:8px">
-                <span style="font-size:10px;color:var(--text3);width:24px;text-align:right;flex-shrink:0">실제</span>
-                <div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
-                  <div style="width:${actualPct}%;height:100%;background:${over?'var(--expense)':'var(--income)'};border-radius:4px;transition:width .5s"></div>
-                </div>
-                <span style="font-size:11px;color:${over?'var(--expense)':'var(--income)'};width:80px;text-align:right;flex-shrink:0">${actual ? fmt(actual) : '-'}</span>
-              </div>
-            </div>
-          </div>`;
-      }).join('')}
-    </div>
-    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:13px">
-      <span style="color:var(--text3)">전체 합계</span>
-      <div style="display:flex;gap:16px">
-        <span style="color:var(--fixed)">예상 ${fmt(totalFixed)}</span>
-        <span style="color:${totalExpense>totalFixed&&totalFixed>0?'var(--expense)':'var(--income)'}">실제 ${fmt(totalExpense)}</span>
+    <div class="compare-card" id="compareCard">
+      <div class="legend">
+        <span style="font-size:11px;color:var(--text3)">카테고리 클릭 시 상세 표시</span>
+        <span style="display:flex;align-items:center;gap:5px"><span class="legend-dot" style="background:var(--fixed)"></span>예상</span>
+        <span style="display:flex;align-items:center;gap:5px"><span class="legend-dot" style="background:var(--income)"></span>실제</span>
+      </div>
+      ${rows}
+      <div class="compare-total-row">
+        <span style="color:var(--text3)">전체 합계</span>
+        <div style="display:flex;gap:16px">
+          <span style="color:var(--fixed)">예상 ${fmt(totalFixed)}</span>
+          <span style="color:${totalOver?'var(--expense)':'var(--income)'}">실제 ${fmt(totalExpense)}</span>
+        </div>
       </div>
     </div>`;
 }
 
-// ── Render ──
+// ── 비교 카드 클릭 이벤트 등록 ──
+function bindCompareEvents() {
+  document.querySelectorAll('.compare-header[data-uid]').forEach(header => {
+    header.addEventListener('click', () => {
+      const uid = header.getAttribute('data-uid');
+      const panel = document.getElementById('detail_' + uid);
+      const arrow = document.getElementById('arrow_' + uid);
+      if (!panel) return;
+      const isOpen = panel.classList.contains('open');
+      panel.classList.toggle('open', !isOpen);
+      if (arrow) arrow.classList.toggle('open', !isOpen);
+    });
+  });
+}
+
+// ── 렌더링 ──
 function render() {
   updateMonthLabel();
-  // 예상지출 탭이면 월 네비 숨기기
   document.getElementById('monthNav').classList.toggle('hidden', currentTab === 'fixed');
 
-  const totalIncome = data.income.reduce((s,i) => s + Number(i.amount), 0);
-  const totalFixed  = data.fixed.reduce((s,i) => s + Number(i.amount), 0);
-  const totalExpense= data.expense.reduce((s,i) => s + Number(i.amount), 0);
-  const balance = totalIncome - totalExpense; // 예상지출 제외
-
+  const totalIncome  = data.income.reduce((s,i) => s + Number(i.amount), 0);
+  const totalFixed   = data.fixed.reduce((s,i) => s + Number(i.amount), 0);
+  const totalExpense = data.expense.reduce((s,i) => s + Number(i.amount), 0);
+  const balance = totalIncome - totalExpense;
   const content = document.getElementById('mainContent');
 
   if (currentTab === 'overview') {
@@ -381,15 +510,15 @@ function render() {
         </div>
       </div>
       <div class="section">
-        <div class="section-header"><div class="section-title">최근 지출</div></div>
-        ${itemListHtml(data.expense.slice(0,5), 'expense', false)}
-      </div>
-      <div class="section">
         <div class="section-header"><div class="section-title">카테고리별 예상 vs 실제</div></div>
         ${renderCategoryComparison(data.fixed, data.expense)}
+      </div>
+      <div class="section">
+        <div class="section-header"><div class="section-title">최근 지출</div></div>
+        ${itemListHtml(data.expense.slice(0,5), 'expense', false)}
       </div>`;
+    bindCompareEvents();
   }
-  
 
   else if (currentTab === 'income') {
     content.innerHTML = `
@@ -424,7 +553,7 @@ function render() {
       </div>
       ${Object.keys(byCatFixed).length ? `
         <div class="section">
-          <div class="section-header"><div class="section-title">카테고리별</div></div>
+          <div class="section-header"><div class="section-title">카테고리별 합계</div></div>
           <div class="item-list">
             ${Object.entries(byCatFixed).sort((a,b)=>b[1]-a[1]).map(([c,a])=>`
               <div class="item">
@@ -437,7 +566,7 @@ function render() {
         <div class="section-header">
           <div class="section-title">예상 지출 목록</div>
           <div style="display:flex;gap:8px">
-            <button class="add-btn" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border)" id="addCatBtn">+ 카테고리</button>
+            <button class="ghost-btn" id="addCatBtn">+ 카테고리</button>
             <button class="add-btn" id="addBtn">+ 추가</button>
           </div>
         </div>
@@ -446,7 +575,6 @@ function render() {
     document.getElementById('addBtn').addEventListener('click', () => openModal('fixed', null));
     document.getElementById('addCatBtn').addEventListener('click', () => addCategoryUI());
   }
-
 
   else if (currentTab === 'expense') {
     const byCat = {};
@@ -461,7 +589,7 @@ function render() {
       </div>
       ${Object.keys(byCat).length ? `
         <div class="section">
-          <div class="section-header"><div class="section-title">카테고리별</div></div>
+          <div class="section-header"><div class="section-title">카테고리별 합계</div></div>
           <div class="item-list">
             ${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([c,a])=>`
               <div class="item">
@@ -474,7 +602,7 @@ function render() {
         <div class="section-header">
           <div class="section-title">지출 내역</div>
           <div style="display:flex;gap:8px">
-            <button class="add-btn" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border)" id="addCatBtn">+ 카테고리</button>
+            <button class="ghost-btn" id="addCatBtn">+ 카테고리</button>
             <button class="add-btn" id="addBtn">+ 추가</button>
           </div>
         </div>
@@ -484,7 +612,7 @@ function render() {
     document.getElementById('addCatBtn').addEventListener('click', () => addCategoryUI());
   }
 
-  // 버튼 이벤트
+  // 수정/삭제 버튼
   document.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const item = data[btn.dataset.type].find(i => i.id === btn.dataset.id);
@@ -498,77 +626,14 @@ function render() {
   });
 }
 
-// ── 카테고리별 그룹 목록 HTML ──
-function itemListByCategory(items, type) {
-  if (!items.length) return `<div class="empty-state">내역이 없어요</div>`;
-
-  // 카테고리별로 묶기
-  const groups = {};
-  items.forEach(i => {
-    const c = i.category || '기타';
-    if (!groups[c]) groups[c] = [];
-    groups[c].push(i);
-  });
-
-  const sign = type === 'income' ? '+' : '-';
-
-  return Object.entries(groups).map(([cat, catItems]) => {
-    const catTotal = catItems.reduce((s,i) => s + Number(i.amount), 0);
-    return `
-      <div style="margin-bottom:16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 4px;margin-bottom:6px;border-bottom:1px solid var(--border)">
-          <span style="font-size:12px;font-weight:700;color:var(--fixed)">${cat}</span>
-          <span style="font-size:12px;color:var(--fixed)">-${fmt(catTotal)}</span>
-        </div>
-        <div class="item-list">
-          ${catItems.map(i => `
-            <div class="item">
-              <div class="item-left">
-                <div class="item-name">${i.name}</div>
-                <div class="item-meta">${i.note ? `· ${i.note}` : ''}</div>
-              </div>
-              <div class="item-right">
-                <div class="item-amount ${type}">${sign}${fmt(i.amount)}</div>
-                <div class="action-btns">
-                  <button class="icon-btn edit-btn" data-id="${i.id}" data-type="${type}">✏️</button>
-                  <button class="icon-btn del-btn" data-id="${i.id}">🗑️</button>
-                </div>
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>`;
-  }).join('');
-}
-
-// ── 아이템 목록 HTML ──
-function itemListHtml(items, type, showActions) {
-  if (!items.length) return `<div class="empty-state">내역이 없어요</div>`;
-  const sign = type === 'income' ? '+' : '-';
-  const cls = type;
-  return `<div class="item-list">${items.map(i => `
-    <div class="item">
-      <div class="item-left">
-        <div class="item-name">${i.name}</div>
-        <div class="item-meta">${i.date||''} ${i.category?`<span class="cat-chip">${i.category}</span>`:''} ${i.note?`· ${i.note}`:''}</div>
-      </div>
-      <div class="item-right">
-        <div class="item-amount ${cls}">${sign}${fmt(i.amount)}</div>
-        ${showActions ? `<div class="action-btns">
-          <button class="icon-btn edit-btn" data-id="${i.id}" data-type="${type}">✏️</button>
-          <button class="icon-btn del-btn" data-id="${i.id}">🗑️</button>
-        </div>` : ''}
-      </div>
-    </div>`).join('')}</div>`;
-}
-
-// ── Modal ──
+// ── 모달 ──
 function openModal(type, item) {
   const isEdit = !!item;
   document.getElementById('modalOverlay').classList.add('open');
   document.getElementById('modalTitle').textContent =
-    `${{income:'💰 수입', fixed:'📌 예상지출', expense:'💳 지출'}[type]} ${isEdit?'수정':'추가'}`;
-
+    ({ income:'💰 수입', fixed:'📌 예상지출', expense:'💳 실제지출' }[type]) + (isEdit ? ' 수정' : ' 추가');
   const body = document.getElementById('modalBody');
+  const catOptions = SHARED_CATS.map(c => `<option ${item?.category===c?'selected':''}>${c}</option>`).join('');
 
   if (type === 'income') {
     body.innerHTML = `
@@ -586,13 +651,12 @@ function openModal(type, item) {
     document.getElementById('submitBtn').addEventListener('click', async () => {
       const name = document.getElementById('f_name').value.trim();
       const amount = document.getElementById('f_amount').value;
-      if (!name || !amount) return alert('항목명과 금액을 입력해주세요');
+      if (!name || !amount) { alert('항목명과 금액을 입력해주세요'); return; }
       const fields = { name, amount: Number(amount), date: document.getElementById('f_date').value, note: document.getElementById('f_note').value.trim() };
       closeModal();
-      isEdit ? await updateEntry(item.id, fields) : await addEntry({type:'income', ...fields});
+      isEdit ? await updateEntry(item.id, fields) : await addEntry({ type:'income', ...fields });
     });
   }
-
   else if (type === 'fixed') {
     body.innerHTML = `
       <div class="form-group"><label class="form-label">항목명</label>
@@ -601,9 +665,7 @@ function openModal(type, item) {
         <div class="form-group"><label class="form-label">금액 (원)</label>
           <input class="form-input" id="f_amount" type="number" placeholder="0" value="${item?.amount||''}"></div>
         <div class="form-group"><label class="form-label">카테고리</label>
-          <select class="form-input" id="f_cat">
-            ${FIXED_CATS.map(c=>`<option ${item?.category===c?'selected':''}>${c}</option>`).join('')}
-          </select></div>
+          <select class="form-input" id="f_cat">${catOptions}</select></div>
       </div>
       <div class="form-group"><label class="form-label">메모 (선택)</label>
         <input class="form-input" id="f_note" placeholder="메모" value="${item?.note||''}"></div>
@@ -611,13 +673,12 @@ function openModal(type, item) {
     document.getElementById('submitBtn').addEventListener('click', async () => {
       const name = document.getElementById('f_name').value.trim();
       const amount = document.getElementById('f_amount').value;
-      if (!name || !amount) return alert('항목명과 금액을 입력해주세요');
+      if (!name || !amount) { alert('항목명과 금액을 입력해주세요'); return; }
       const fields = { name, amount: Number(amount), category: document.getElementById('f_cat').value, note: document.getElementById('f_note').value.trim() };
       closeModal();
-      isEdit ? await updateEntry(item.id, fields) : await addEntry({type:'fixed', ...fields});
+      isEdit ? await updateEntry(item.id, fields) : await addEntry({ type:'fixed', ...fields });
     });
   }
-
   else if (type === 'expense') {
     body.innerHTML = `
       <div class="form-group"><label class="form-label">항목명</label>
@@ -629,26 +690,25 @@ function openModal(type, item) {
           <input class="form-input" id="f_date" type="date" value="${item?.date||todayStr()}"></div>
       </div>
       <div class="form-group"><label class="form-label">카테고리</label>
-        <select class="form-input" id="f_cat">
-          ${EXPENSE_CATS.map(c=>`<option ${item?.category===c?'selected':''}>${c}</option>`).join('')}
-        </select></div>
+        <select class="form-input" id="f_cat">${catOptions}</select></div>
       <button class="submit-btn" id="submitBtn">${isEdit?'수정하기':'저장'}</button>`;
     document.getElementById('submitBtn').addEventListener('click', async () => {
       const name = document.getElementById('f_name').value.trim();
       const amount = document.getElementById('f_amount').value;
-      if (!name || !amount) return alert('항목명과 금액을 입력해주세요');
+      if (!name || !amount) { alert('항목명과 금액을 입력해주세요'); return; }
       const fields = { name, amount: Number(amount), date: document.getElementById('f_date').value, category: document.getElementById('f_cat').value };
       closeModal();
-      isEdit ? await updateEntry(item.id, fields) : await addEntry({type:'expense', ...fields});
+      isEdit ? await updateEntry(item.id, fields) : await addEntry({ type:'expense', ...fields });
     });
   }
 }
 
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
 document.getElementById('modalClose').addEventListener('click', closeModal);
-document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target.id==='modalOverlay') closeModal(); });
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target.id === 'modalOverlay') closeModal();
+});
 
-// ── Month nav ──
 function updateMonthLabel() {
   document.getElementById('monthLabel').textContent = `${currentYear}.${String(currentMonth).padStart(2,'0')}`;
 }
@@ -661,7 +721,6 @@ document.getElementById('nextMonth').addEventListener('click', async () => {
   await reload();
 });
 
-// ── Tabs ──
 document.querySelectorAll('[data-tab]').forEach(btn => {
   btn.addEventListener('click', async () => {
     currentTab = btn.dataset.tab;
@@ -672,7 +731,8 @@ document.querySelectorAll('[data-tab]').forEach(btn => {
 });
 
 async function reload() {
-  document.getElementById('mainContent').innerHTML = '<div class="loading"><div class="spinner"></div>불러오는 중...</div>';
+  document.getElementById('mainContent').innerHTML =
+    '<div class="loading"><div class="spinner"></div>불러오는 중...</div>';
   await loadData();
   render();
 }
