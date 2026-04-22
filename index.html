@@ -271,125 +271,68 @@ function toggleDetail(uid) {
 }
 // ── 카테고리별 비교 렌더링 ──
 function renderCategoryComparison(fixedItems, expenseItems) {
+  const allCats = [...new Set([
+    ...fixedItems.map(i => i.category || '기타'),
+    ...expenseItems.map(i => i.category || '기타')
+  ])];
+  if (!allCats.length) return `<div class="empty-state">데이터가 없어요</div>`;
+
   const fixedByCat = {};
   const expenseByCat = {};
-  const fixedItemsByCat = {};
-  const expenseItemsByCat = {};
+  fixedItems.forEach(i => { const c = i.category||'기타'; fixedByCat[c]=(fixedByCat[c]||0)+Number(i.amount); });
+  expenseItems.forEach(i => { const c = i.category||'기타'; expenseByCat[c]=(expenseByCat[c]||0)+Number(i.amount); });
 
-  fixedItems.forEach(i => {
-    const c = i.category || '기타';
-    fixedByCat[c] = (fixedByCat[c] || 0) + Number(i.amount);
-    if (!fixedItemsByCat[c]) fixedItemsByCat[c] = [];
-    fixedItemsByCat[c].push(i);
-  });
-  expenseItems.forEach(i => {
-    const c = i.category || '기타';
-    expenseByCat[c] = (expenseByCat[c] || 0) + Number(i.amount);
-    if (!expenseItemsByCat[c]) expenseItemsByCat[c] = [];
-    expenseItemsByCat[c].push(i);
-  });
+  const totalFixed = Object.values(fixedByCat).reduce((s,v)=>s+v,0);
+  const totalExpense = Object.values(expenseByCat).reduce((s,v)=>s+v,0);
 
-  const allCats = [...new Set([...Object.keys(fixedByCat), ...Object.keys(expenseByCat)])];
-  if (!allCats.length) {
-    return `<div class="empty-state">예상지출 또는 실제지출을 입력하면 비교가 나타나요</div>`;
-  }
-
-  const sorted = allCats.sort((a,b) => (fixedByCat[b]||0) - (fixedByCat[a]||0));
-  const totalFixed   = Object.values(fixedByCat).reduce((s,v) => s+v, 0);
-  const totalExpense = Object.values(expenseByCat).reduce((s,v) => s+v, 0);
-
-  const rows = sorted.map(cat => {
-    const planned = fixedByCat[cat] || 0;
-    const actual  = expenseByCat[cat] || 0;
-    const maxVal  = Math.max(planned, actual, 1);
-    const plannedPct = (planned / maxVal * 100).toFixed(1);
-    const actualPct  = (actual  / maxVal * 100).toFixed(1);
-    const over = actual > planned && planned > 0;
-    const statusColor = over ? 'var(--expense)' : (actual > 0 && planned > 0) ? 'var(--income)' : 'var(--text3)';
-    const statusText  = over
-      ? `+${fmt(actual - planned)} 초과`
-      : (actual > 0 && planned > 0) ? `${fmt(planned - actual)} 절약` : '';
-    const actualBarColor = over ? 'var(--expense)' : 'var(--income)';
-    const uid = cat.replace(/[^a-zA-Z0-9가-힣]/g, '_');
-
-    // 예상 목록
-    const fixedList = (fixedItemsByCat[cat] || []).map(i => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg3);border-radius:8px;margin-bottom:4px">
-        <span style="font-size:13px">${i.name}</span>
-        <span style="font-size:13px;color:var(--fixed);font-weight:600">-${fmt(i.amount)}</span>
-      </div>`).join('') || `<div style="font-size:12px;color:var(--text3);padding:6px 10px">항목 없음</div>`;
-
-    // 실제 목록
-    const expenseList = (expenseItemsByCat[cat] || []).map(i => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg3);border-radius:8px;margin-bottom:4px">
-        <div style="display:flex;flex-direction:column;gap:2px">
-          <span style="font-size:13px">${i.name}</span>
-          ${i.date ? `<span style="font-size:10px;color:var(--text3)">${i.date}</span>` : ''}
-        </div>
-        <span style="font-size:13px;color:${actualBarColor};font-weight:600">-${fmt(i.amount)}</span>
-      </div>`).join('') || `<div style="font-size:12px;color:var(--text3);padding:6px 10px">항목 없음</div>`;
-
-    return `
-      <div class="compare-row">
-        <div class="compare-header" onclick="toggleDetail('${uid}')" style="cursor:pointer;user-select:none">
-          <span class="compare-cat">${cat} <span style="font-size:10px;color:var(--text3)" id="arrow_${uid}">▼</span></span>
-          <span class="compare-status" style="color:${statusColor}">${statusText}</span>
-        </div>
-        <div class="compare-bar-wrap">
-          <span class="compare-bar-label">예상</span>
-          <div class="compare-bar-bg">
-            <div class="compare-bar-fill" style="width:${plannedPct}%;background:var(--fixed)"></div>
-          </div>
-          <span class="compare-bar-amount" style="color:var(--fixed)">${planned ? fmt(planned) : '-'}</span>
-        </div>
-        <div class="compare-bar-wrap">
-          <span class="compare-bar-label">실제</span>
-          <div class="compare-bar-bg">
-            <div class="compare-bar-fill" style="width:${actualPct}%;background:${actualBarColor}"></div>
-          </div>
-          <span class="compare-bar-amount" style="color:${actualBarColor}">${actual ? fmt(actual) : '-'}</span>
-        </div>
-
-        <!-- 펼치기 영역 -->
-        <div id="detail_${uid}" style="display:none;margin-top:10px">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <div>
-              <div style="font-size:11px;color:var(--fixed);font-weight:700;margin-bottom:6px;padding-left:2px">📌 예상 목록</div>
-              ${fixedList}
-            </div>
-            <div>
-              <div style="font-size:11px;color:${actualBarColor};font-weight:700;margin-bottom:6px;padding-left:2px">💳 실제 목록</div>
-              ${expenseList}
-            </div>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-
-  const totalOver = totalExpense > totalFixed && totalFixed > 0;
-  const totalColor = totalOver ? 'var(--expense)' : 'var(--income)';
+  // 예상지출 기준으로 정렬, 실제지출만 있는 카테고리도 포함
+  const sorted = allCats.sort((a,b)=>(fixedByCat[b]||0)-(fixedByCat[a]||0));
 
   return `
-    <div class="compare-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <span style="font-size:11px;color:var(--text3)">카테고리 클릭 시 상세 내역 표시</span>
-        <div style="display:flex;gap:16px;font-size:11px;color:var(--text3)">
-          <span style="display:flex;align-items:center;gap:5px">
-            <span style="width:10px;height:10px;border-radius:2px;background:var(--fixed);display:inline-block"></span>예상
-          </span>
-          <span style="display:flex;align-items:center;gap:5px">
-            <span style="width:10px;height:10px;border-radius:2px;background:var(--income);display:inline-block"></span>실제
-          </span>
-        </div>
-      </div>
-      ${rows}
-      <hr class="">
-      <div class="compare-total">
-        <span style="color:var(--text3)">전체 합계</span>
-        <div style="display:flex;gap:16px">
-          <span style="color:var(--fixed)">예상 ${fmt(totalFixed)}</span>
-          <span style="color:${totalColor}">실제 ${fmt(totalExpense)}</span>
-        </div>
+    <div style="display:flex;justify-content:flex-end;gap:16px;margin-bottom:12px;font-size:11px;color:var(--text3)">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--fixed);display:inline-block"></span>예상</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--expense);display:inline-block"></span>실제</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      ${sorted.map(cat => {
+        const planned = fixedByCat[cat] || 0;
+        const actual  = expenseByCat[cat] || 0;
+        const max = Math.max(planned, actual, 1);
+        const plannedPct = (planned / max * 100).toFixed(1);
+        const actualPct  = (actual  / max * 100).toFixed(1);
+        const over = actual > planned && planned > 0;
+        const statusColor = over ? 'var(--expense)' : actual > 0 ? 'var(--income)' : 'var(--text3)';
+        const statusText  = over ? `+${fmt(actual-planned)} 초과` : actual > 0 && planned > 0 ? `${fmt(planned-actual)} 절약` : '';
+        return `
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:13px;font-weight:500">${cat}</span>
+              <span style="font-size:11px;color:${statusColor};font-weight:600">${statusText}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:10px;color:var(--text3);width:24px;text-align:right;flex-shrink:0">예상</span>
+                <div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
+                  <div style="width:${plannedPct}%;height:100%;background:var(--fixed);border-radius:4px;transition:width .5s"></div>
+                </div>
+                <span style="font-size:11px;color:var(--fixed);width:80px;text-align:right;flex-shrink:0">${planned ? fmt(planned) : '-'}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:10px;color:var(--text3);width:24px;text-align:right;flex-shrink:0">실제</span>
+                <div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
+                  <div style="width:${actualPct}%;height:100%;background:${over?'var(--expense)':'var(--income)'};border-radius:4px;transition:width .5s"></div>
+                </div>
+                <span style="font-size:11px;color:${over?'var(--expense)':'var(--income)'};width:80px;text-align:right;flex-shrink:0">${actual ? fmt(actual) : '-'}</span>
+              </div>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:13px">
+      <span style="color:var(--text3)">전체 합계</span>
+      <div style="display:flex;gap:16px">
+        <span style="color:var(--fixed)">예상 ${fmt(totalFixed)}</span>
+        <span style="color:${totalExpense>totalFixed&&totalFixed>0?'var(--expense)':'var(--income)'}">실제 ${fmt(totalExpense)}</span>
       </div>
     </div>`;
 }
