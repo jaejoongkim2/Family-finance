@@ -151,10 +151,25 @@
     .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 20px; font-size: 13px; z-index: 300; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
     .toast.show { opacity: 1; }
     .cat-chip { display: inline-block; background: var(--bg3); border-radius: 6px; padding: 2px 7px; font-size: 10px; color: var(--text3); }
+
+    /* 비밀번호 잠금 */
+    .lock-screen { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+    .lock-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--accent); margin-bottom: 8px; }
+    .lock-sub { font-size: 13px; color: var(--text3); margin-bottom: 40px; }
+    .lock-input { width: 100%; max-width: 300px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Noto Sans KR', sans-serif; font-size: 18px; padding: 14px 18px; outline: none; text-align: center; letter-spacing: 4px; margin-bottom: 14px; transition: border-color .2s; }
+    .lock-input:focus { border-color: var(--accent); }
+    .lock-btn { width: 100%; max-width: 300px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); padding: 14px; font-family: 'Noto Sans KR', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .lock-error { font-size: 13px; color: var(--expense); margin-top: 12px; min-height: 20px; }
   </style>
 </head>
 <body>
-
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-title">Kate & Jensen</div>
+  <div class="lock-sub">가계부에 접근하려면 비밀번호를 입력하세요</div>
+  <input class="lock-input" id="lockInput" type="password" placeholder="••••" maxlength="20" />
+  <button class="lock-btn" id="lockBtn">입력</button>
+  <div class="lock-error" id="lockError"></div>
+</div>
 <div class="header">
   <div class="header-top">
     <div>
@@ -214,6 +229,38 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// ── 비밀번호 잠금 ──
+const APP_PASSWORD = '여기에비밀번호입력';  // ← 원하는 비밀번호로 바꾸세요
+const SESSION_KEY = 'kj_auth';
+
+function checkLock() {
+  if (sessionStorage.getItem(SESSION_KEY) === 'ok') {
+    document.getElementById('lockScreen').style.display = 'none';
+    initApp();
+  }
+}
+
+function initApp() {
+  reload();
+}
+
+document.getElementById('lockBtn').addEventListener('click', () => {
+  const val = document.getElementById('lockInput').value;
+  if (val === APP_PASSWORD) {
+    sessionStorage.setItem(SESSION_KEY, 'ok');
+    document.getElementById('lockScreen').style.display = 'none';
+    initApp();
+  } else {
+    document.getElementById('lockError').textContent = '비밀번호가 틀렸어요 🔒';
+    document.getElementById('lockInput').value = '';
+    document.getElementById('lockInput').focus();
+  }
+});
+
+document.getElementById('lockInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('lockBtn').click();
+});
 
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth() + 1;
@@ -737,7 +784,7 @@ async function reload() {
   render();
 }
 
-reload();
+checkLock();
 </script>
 </body>
 </html>
