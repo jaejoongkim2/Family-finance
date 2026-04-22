@@ -343,7 +343,7 @@ function renderCategoryComparison(fixedItems, expenseItems) {
         </div>
 
         <!-- 펼치기 영역 -->
-        <div id="detail_${uid}" style="display:none;margin-top:10px;display:none">
+        <div id="detail_${uid}" style="display:none;margin-top:10px">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <div>
               <div style="font-size:11px;color:var(--fixed);font-weight:700;margin-bottom:6px;padding-left:2px">📌 예상 목록</div>
@@ -486,7 +486,7 @@ function render() {
         <div class="section-header">
           <div class="section-title">예상 지출 목록</div>
           <div style="display:flex;gap:8px">
-            <button class="ghost-btn" id="addCatBtn">+ 카테고리</button>
+            <button class="ghost-btn" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border)" id="addCatBtn">+ 카테고리</button>
             <button class="add-btn" id="addBtn">+ 추가</button>
           </div>
         </div>
