@@ -428,7 +428,7 @@ function renderCategoryComparison(fixedItems, expenseItems) {
     const actualPct  = (actual  / maxVal * 100).toFixed(1);
     const over = actual > planned && planned > 0;
     const statusColor = over ? 'var(--expense)' : (actual > 0 && planned > 0) ? 'var(--income)' : 'var(--text3)';
-    const statusText  = over ? `+${fmt(actual - planned)} 초과` : (actual > 0 && planned > 0) ? `${fmt(planned - actual)} 절약` : '';
+    const statusText  = over ? `+${fmt(actual - planned)} 초과` : (actual > 0 && planned > 0) ? `${fmt(planned - actual)} 절약` : (actual > 0 && planned === 0) ? `+${fmt(actual)} 초과` : '';
     const actualBarColor = over ? 'var(--expense)' : 'var(--income)';
     const uid = 'cat_' + cat.replace(/[^a-zA-Z0-9가-힣]/g, '_') + '_' + Math.random().toString(36).slice(2,6);
 
